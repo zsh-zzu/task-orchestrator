@@ -87,6 +87,12 @@
 - 若 `user` profile 失败，应排查 existing-session / chrome-mcp / remote debugging / `DevToolsActivePort` 等问题
 - 以当前官方文档和实际 `browser profiles` 输出为准
 
+**用户新要求（2026-03-28）**：
+- 以后全体助理默认使用张博自己的 Chrome 浏览器
+- 不要擅自新建新的 Chrome 实例
+- 浏览器操作优先走用户现有 Chrome 会话（优先 `profile="user"`）
+- 只有在用户明确允许或任务确有必要时，才考虑独立浏览器实例
+
 **适用范围**：全体团队成员（leader、scholar、auto、creator、stock、mate、bian）
 
 **原记录时间**：2026-03-23
