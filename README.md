@@ -12,6 +12,13 @@
 - **进度追踪与状态管理** — 实时追踪每个子任务的执行状态 / Real-time tracking of each subtask's execution status
 - **结果汇总与质量门控** — 自动聚合子任务输出，支持审核与修正循环 / Aggregate subtask outputs with review and correction loops
 - **可复用的任务模板** — 将常见工作流保存为模板，一键复用 / Save common workflows as reusable templates
+- **高级协作模式** — 支持竞争假设（Adversarial Hypotheses）、辩论共识（Debate & Consensus）、分层编排（Hierarchical Orchestration）三种协作范式 / Advanced collaboration modes: Adversarial Hypotheses, Debate & Consensus, Hierarchical Orchestration
+- **任务认领模式** — 支持 Lead 指派分配与 Agent 自主认领两种模式 / Task claiming: Lead-assigned dispatch vs self-service claiming
+- **Handoff 结构化交接协议** — Agent 间任务交接采用标准化协议，确保上下文无损传递 / Structured handoff protocol for lossless context transfer between agents
+- **交付证明机制** — 每个子任务完成时需提供可验证的交付物 / Delivery proof mechanism with verifiable artifacts per subtask
+- **Anti-drop guard 防遗漏机制** — 自动检测遗漏子任务，确保零任务丢失 / Anti-drop guard to detect and prevent dropped subtasks
+- **成本意识与优化策略** — 自动选择经济高效的执行路径，避免冗余调用 / Cost-aware optimization to minimize redundant invocations
+- **能力分类与 Agent 映射体系** — 基于任务能力需求自动匹配最佳 Agent / Capability taxonomy with intelligent agent mapping
 
 ---
 
@@ -24,6 +31,11 @@
 | Agent 路由 | 手动指定 | 按角色分配 | **按任务类型智能匹配** |
 | 进度追踪 | 无 | 基础 | **实时状态看板** |
 | 复用性 | 低 | 中 | **任务模板系统** |
+| 协作模式 | 单向委托 | 固定角色 | **竞争假设 / 辩论共识 / 分层编排** |
+| 任务认领 | 无 | 团队内协商 | **Lead 分配 + 自主认领双模式** |
+| 交接协议 | 自由文本 | 非正式 | **Handoff 结构化协议** |
+| 质量保障 | 无 | 基础 | **交付证明 + Anti-drop guard** |
+| 成本控制 | 无感知 | 无感知 | **成本意识自动优化** |
 | 适用场景 | 单次简单委托 | 长期固定团队协作 | **复杂一次性/周期性项目** |
 
 ---
@@ -61,20 +73,60 @@ flowchart TD
     A[📥 接收任务] --> B{复杂任务?}
     B -- 否 --> C[直接执行]
     B -- 是 --> D[🔍 分析需求]
-    D --> E[📋 生成任务计划]
-    E --> F[📊 构建依赖图]
-    F --> G[🔀 拓扑排序]
-    G --> H[🤖 分配 Agent]
-    H --> I{可并行?}
-    I -- 是 --> J[⚡ 并行执行子任务]
-    I -- 否 --> K[➡️ 顺序执行子任务]
-    J --> L[🔄 结果汇总]
-    K --> L
-    L --> M{质量通过?}
-    M -- 否 --> N[🔧 修正重试]
-    N --> H
-    M -- 是 --> O[✅ 输出最终结果]
+    D --> E{协作模式?}
+    E -- 标准模式 --> F[📋 生成任务计划]
+    E -- 竞争假设 --> F1[📋 生成对立假设任务]
+    E -- 辩论共识 --> F2[📋 生成辩论议题]
+    E -- 分层编排 --> F3[📋 生成分层计划]
+    F --> G[📊 构建依赖图]
+    F1 --> G
+    F2 --> G
+    F3 --> G
+    G --> H[🔀 拓扑排序]
+    H --> I[🤖 分配 Agent]
+    I --> J{认领模式?}
+    J -- Lead 分配 --> K1[📋 指派子任务]
+    J -- 自主认领 --> K2[📢 发布任务池]
+    K1 --> L
+    K2 --> L
+    L{可并行?}
+    L -- 是 --> M[⚡ 并行执行子任务]
+    L -- 否 --> N[➡️ 顺序执行子任务]
+    M --> O[🔄 结果汇总]
+    N --> O
+    O --> P{质量通过?}
+    P -- 否 --> Q[🔧 修正重试]
+    Q --> I
+    P -- 是 --> R[🛡️ Anti-drop guard 检查]
+    R --> S{全部完成?}
+    S -- 否 --> T[⚠️ 重新调度遗漏任务]
+    T --> I
+    S -- 是 --> U[✅ 输出最终结果]
 ```
+
+---
+
+## Advanced Patterns / 高级模式
+
+Task Orchestrator 提供三种超越传统编排的高级协作模式，适用于高复杂度、高不确定性场景。
+
+### 竞争假设 / Adversarial Hypotheses
+
+为同一问题生成多个对立假设，分别由不同 Agent 独立验证，通过对比分析得出更可靠的结论。
+
+> 示例：针对"迁移学习是否适用于当前小样本数据集"，同时让 scholar 提出支持论据、stock 从统计角度提出质疑，最后由 leader 裁决。
+
+### 辩论共识 / Debate & Consensus
+
+多 Agent 就某一议题进行结构化辩论，每轮提出论点与反驳，最终收敛到共识方案。
+
+> 示例：在系统架构选型上，auto 倾向微服务而 scholar 倾向单体方案，经过两轮辩论后达成折中的模块化单体方案。
+
+### 分层编排 / Hierarchical Orchestration
+
+将大任务分解为多个层级，每个层级由不同的 Lead Agent 负责编排其下属子任务，形成树状指挥结构。
+
+> 示例：leader 统筹一个论文项目，将"实验"子层交给 scholar 编排（包含数据准备、模型训练、结果分析），将"图表"子层交给 creator 编排。
 
 ---
 

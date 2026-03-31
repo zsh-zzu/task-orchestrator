@@ -126,7 +126,73 @@
 - **Agent Teams**：适合长期项目、需要 Agent 间深度协作、任务边界模糊时
 - 经验法则：任务可在 1 小时内完成 → Subagents；需要多轮迭代 → Agent Teams
 
-## 6. 常见反模式与解决方案
+## 6. 通信架构选择：Mesh vs Hub-and-spoke
+
+### 模式对比
+
+| 维度 | Hub-and-spoke | Mesh |
+|------|---------------|------|
+| 路径 | 所有消息经 orchestrator 中转 | Agent 间直接通信 |
+| 适合 | 强依赖链、成本敏感、需统一决策 | 辩论/质疑、探索性研究、跨领域协调 |
+
+### 决策流程图（文字描述）
+
+```
+1. 任务间是否有强依赖？ → 是 → Hub-and-spoke
+2. Agent 是否需要辩论或质疑彼此结论？ → 是 → Mesh
+3. 是否涉及关键决策点（方案选型、架构设计）？ → 是 → Mesh
+4. 成本是否高度敏感？ → 是 → Hub-and-spoke
+5. 默认 → Hub-and-spoke
+```
+
+### 混合模式（推荐）
+
+日常用 Hub-and-spoke 保持可控，遇到关键决策点临时切换为 Mesh。示例：论文写作流程中，数据采集和文献综述用 Hub-and-spoke，但确定实验方案时让 scholar 和 auto 直接讨论可行性。
+
+## 7. 能力分类与 Agent 映射
+
+| 能力类型 | 描述 | 适合的 Agent | 搜索关键词 |
+|----------|------|-------------|-----------|
+| browser_automation | 网页操作、截图、表单填写 | auto | agent-browser, playwright |
+| web_search | 信息检索、新闻查找 | stock, scholar | tavily, exa-search |
+| api_integration | 第三方 API 调用与对接 | auto | api, rest, webhook |
+| data_extraction | 从网页/文件/PDF 提取结构化数据 | auto, scholar | scraping, parser |
+| data_transformation | 数据清洗、格式转换、聚合 | auto, stock | transform, etl |
+| content_generation | 文案、报告、代码生成 | creator, scholar | writing, generation |
+| file_operations | 读写、编辑、压缩文件 | auto | file, fs |
+| message_delivery | 发送通知到 Telegram/飞书等 | leader | telegram, notify |
+| scheduling | 定时任务、cron 管理 | auto, leader | cron, scheduler |
+| authentication | 登录、token、OAuth | auto | auth, login |
+| database_operations | SQL/NoSQL 读写、迁移 | auto | database, sql |
+| code_execution | 运行脚本、编译、构建 | auto | exec, runner |
+| version_control | Git 操作、PR 管理 | auto | git, version-control |
+| testing | 单元/集成/E2E 测试 | auto | testing, jest |
+| deployment | CI/CD、容器、服务器部署 | auto | deploy, docker |
+| monitoring | 日志、指标、告警 | auto, stock | monitor, logging |
+
+## 8. 任务认领 vs 分配的决策树
+
+```
+1. 任务是否需要特定专长？ → 是 → orchestrator 分配
+2. 任务是否需要严格的执行顺序？ → 是 → orchestrator 分配
+3. Agent 是否有足够的上下文判断该做什么？ → 是 → 允许认领
+4. 任务是否为探索性/开放性？ → 是 → 允许认领（激发主动性）
+5. 默认 → orchestrator 分配
+```
+
+**示例**：重构登录模块 → 分配（需要 auto 的代码专长）；调研新技术方向 → 允许 scholar 自主认领（探索性任务）。
+
+## 9. 成本优化策略
+
+| 复杂度 | 模式 | 成本特征 | 示例 |
+|--------|------|----------|------|
+| 低 | 直接执行 | 零额外成本 | 修改配置文件、查天气 |
+| 中 | Subagents | Σ 各 subagent token | 写一个脚本 + 并行测试 |
+| 高 | Agent Teams | 各 agent 独立上下文 × 数量 | 多人协作开发完整项目 |
+
+**优化建议**：能用 subagent 就不用 agent teams；并发数控制在 3 以内；完成的 session 及时清理，避免上下文膨胀。
+
+## 10. 常见反模式与解决方案
 
 | 反模式 | 症状 | 解决方案 |
 |--------|------|----------|
