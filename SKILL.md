@@ -152,8 +152,33 @@ Fill `## Retro` in tracking file:
 ### Patterns File (`workspace/tasks/patterns.md`)
 Distill lessons: sizing rules, dependency rules, templates (e.g., "API build: provision → auth+endpoints → tests → deploy").
 
-### Archive
-Completed plans → rename `{date}-{slug}.plan.md` in `workspace/tasks/archive/`
+### Lifecycle & Cleanup
+
+Plans follow a strict lifecycle to prevent accumulation:
+
+```
+active/ → completed → archive/ → deleted (after pattern extraction)
+```
+
+**On completion:**
+1. Fill Retro, extract reusable patterns to `patterns.md`
+2. Move tracking file: `workspace/tasks/` → `workspace/tasks/archive/`
+3. Prefix with date: `{date}-{slug}.plan.md`
+
+**Retention policy:**
+- Keep max 20 archived plans in `archive/`
+- Keep max 30 days (delete older)
+- Abandoned plans: archive immediately, no pattern extraction needed
+
+**Cleanup routine (run before each new orchestration):**
+1. Count files in `archive/`
+2. If > 20: delete oldest files beyond limit
+3. Check dates: delete files older than 30 days
+4. Check `patterns.md` for stale entries (unused 30+ days) and remove them
+
+**Pattern extraction then delete:**
+- After extracting reusable patterns from an archived plan into `patterns.md`, the archived plan can be safely deleted — the knowledge is preserved in patterns
+- Only keep archived plans that have NOT been fully extracted yet
 
 ## Advanced Collaboration Patterns
 
