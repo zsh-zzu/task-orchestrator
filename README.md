@@ -47,7 +47,7 @@
 将本 skill 目录放置到 OpenClaw skills 路径下：
 
 ```
-~/.openclaw/workspace-leader/skills/task-orchestrator/
+~/.openclaw/workspace/skills/task-orchestrator/
 ```
 
 ### 2. 创建任务计划
