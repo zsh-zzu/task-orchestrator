@@ -1,27 +1,36 @@
 ---
 name: task-orchestrator
-description: Complex task decomposition and subagent orchestration with monitoring, review, and learning. Use when: (1) user gives a complex task requiring multiple steps or agents, (2) user asks to break down/decompose/split a task, (3) user says "orchestrate", "复杂任务", "拆分任务", "子任务", (4) managing multi-phase projects with parallel workstreams. NOT for: simple one-shot requests, single tool calls, or conversational exchanges.
+description: Complex task decomposition and multi-agent orchestration with shared task lists, inter-agent communication, quality gates, and learning. Use when: (1) user gives a complex task requiring multiple steps or agents, (2) user asks to break down/decompose/split a task, (3) user says "orchestrate", "复杂任务", "拆分任务", "子任务", (4) managing multi-phase projects with parallel workstreams, (5) coordinating specialized agents on a shared project. NOT for: simple one-shot requests, single tool calls, conversational exchanges, or tasks with tight sequential dependencies.
 ---
 
 # Task Orchestrator
 
 ## Decision: Simple or Complex?
 
-**Simple** → handle directly. ALL true:
+### Simple → handle directly. ALL true:
 - Single clear action
 - One agent can complete
 - No dependencies between steps
 
-**Complex** → proceed below. ANY true:
+### Complex → proceed below. ANY true:
 - 3+ steps with dependencies
 - Spans multiple agents/tools
 - Multi-phase or parallel workstreams
+- Requires inter-agent coordination
+
+### Complexity Routing
+
+| Complexity | Strategy | When |
+|-----------|----------|------|
+| Low (1-2 steps) | Direct execution | Simple queries, single tool calls |
+| Medium (3-6 steps) | Subagents | Independent parallel tasks, result-only needed |
+| High (7+ steps or cross-domain) | Agent Teams | Need inter-agent discussion, shared context, collaboration |
 
 ## Phase 1: Decompose
 
 ### Rules
 - Read the FULL request before decomposing
-- Each subtask: clear deliverable + acceptance criteria + one agent
+- Each subtask: clear deliverable + acceptance criteria + assigned agent
 - Action-oriented names: "Build X", "Analyze Y", "Deploy Z"
 - Mark real dependencies only — parallel what CAN be parallel
 - Size: `(S)` <30min, `(M)` 30min-2h, `(L)` 2h+
@@ -61,7 +70,7 @@ Started: {date} | Status: in-progress | Revised: 0
 ## Phase 2: Dispatch
 
 ### Agent Assignment
-Map by AGENTS.md. Fallback: use `runtime="subagent"` with default agent.
+Map by AGENTS.md role definitions. Fallback: use `runtime="subagent"` with default agent.
 
 ### Spawn Pattern
 ```
@@ -82,9 +91,9 @@ sessions_spawn(
 ## Phase 3: Monitor & Review
 
 ### Progress Check
-Use `subagents(action="list")` — don't poll in loops, check on events.
+Use `subagents(action="list")` — don't poll in loops, check on events or when asked.
 
-### Status Report Format
+### Status Report Format (size-aware)
 ```
 📋 Plan: {name}
 Progress: 3/7 tasks (1L + 2S remaining)
@@ -93,40 +102,65 @@ Blocked: Task 5 — waiting on X
 Revised: 1x
 ```
 
-Size-aware > task-count.
+### Quality Gates
 
-### Review on Completion
-When a subagent completes:
-1. Check result against acceptance criteria
-2. ✅ Pass → update tracking file, mark done
-3. ❌ Fail → retry once with refined instructions, then report to user
-4. Record outcome in tracking file
+Every completed subtask goes through quality check:
+1. **Acceptance criteria met?** → compare result against stated criteria
+2. **Output exists at expected path?** → verify artifacts
+3. **No regressions?** → downstream tasks still viable
+
+- ✅ Pass → update tracking file, mark done
+- ❌ Fail → retry once with refined instructions, then escalate to user
+- ⚠️ Partial → note gaps, decide: fix inline or flag for user
+
+### Inter-Agent Communication
+
+For medium+ complexity, enable direct agent-to-agent messaging:
+```
+sessions_send(agentId=<target>, message=<context + findings + question>)
+```
+
+Use when:
+- Agent A's output is input for Agent B (handoff with context)
+- Agents need to debate/challenge findings
+- Cross-domain coordination needed (e.g., frontend ↔ backend)
 
 ### Blocked Tasks
 - Mark it, work next unblocked task
 - Don't let dependent lines drift apart
+- Auto-resume when blocker clears
 
 ### Failure Handling
 - Task fails → note it, assess: can downstream still run?
 - Unrecoverable → Status: `abandoned`, explain why
 - Record what DID work — partial progress has value
 
-## Phase 4: Complete
+## Phase 4: Complete & Learn
 
-When all subtasks done:
-1. Update tracking file status to `completed`
-2. Fill `## Retro` section:
-   - What worked / What didn't
-   - Sizing accuracy
-   - Dependencies missed
-   - Reusable patterns
-3. Archive: rename to `{date}-{slug}.plan.md`
-4. Synthesize results → coherent summary to user
-5. Update `workspace/tasks/patterns.md` with learned lessons
+### Completion Checklist
+- [ ] All subtasks marked done or explicitly abandoned
+- [ ] Tracking file status updated to `completed`
+- [ ] Results synthesized into coherent summary
+- [ ] Artifacts collected and paths verified
+- [ ] Summary delivered to user
 
-### Patterns File (`patterns.md`)
+### Retro (Learning Loop)
+
+Fill `## Retro` section in tracking file:
+```markdown
+## Retro
+- **What worked:** [specific patterns that helped]
+- **What didn't:** [specific failures or inefficiencies]
+- **Sizing accuracy:** X/N tasks sized correctly
+- **Dependencies missed:** [if any]
+- **Reusable pattern:** [template for similar future tasks]
+```
+
+### Patterns File (`workspace/tasks/patterns.md`)
+Distill lessons for future planning:
 ```markdown
 # Planning Patterns
+
 ## Sizing
 - [learned sizing rules]
 
@@ -137,6 +171,9 @@ When all subtasks done:
 - **API build:** provision → auth + endpoints (parallel) → tests → deploy
 ```
 
+### Archive
+Completed plans → rename `{date}-{slug}.plan.md` in `workspace/tasks/archive/`
+
 ## Anti-patterns
 
 - **Over-decomposition:** 15 tasks for 4 steps of real work
@@ -146,3 +183,5 @@ When all subtasks done:
 - **No review:** Accepting results without checking acceptance criteria
 - **Poll loops:** Don't repeatedly call subagents list; check on events
 - **Orchestrator doing execution:** Route and track, don't build yourself
+- **Communication bottleneck:** Forcing all inter-agent chat through orchestrator when direct messaging is available
+- **Ignoring partial results:** A failed task may still produce useful artifacts for downstream work
