@@ -37,9 +37,9 @@
 将任务匹配到最擅长的 Agent，而非最空闲的 Agent：
 
 ```
-任务：实现 Transformer 模型 → 分配给 scholar（学术研究）
-任务：写部署脚本 → 分配给 auto（自动化）
-任务：分析市场数据 → 分配给 stock（股票分析）
+任务：实现 Transformer 模型 → 分配给 research-agent（研究类）
+任务：写部署脚本 → 分配给 dev-agent（开发类）
+任务：分析市场数据 → 分配给 analyst-agent（分析类）
 ```
 
 ### 复杂度与模型匹配
@@ -84,10 +84,10 @@
 ```
 📊 任务进度 [2026-03-31 17:00]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ T1 数据采集 (auto) - 已完成
-🔄 T2 数据清洗 (auto) - 进行中 (60%)
-⏳ T3 模型训练 (scholar) - 等待 T2
-⏳ T4 结果分析 (scholar) - 等待 T3
+✅ T1 数据采集 (dev-agent) - 已完成
+🔄 T2 数据清洗 (dev-agent) - 进行中 (60%)
+⏳ T3 模型训练 (research-agent) - 等待 T2
+⏳ T4 结果分析 (research-agent) - 等待 T3
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 风险：T2 数据质量可能影响 T3 训练效果
 ```
@@ -111,18 +111,18 @@
 ### Lead + Teammates 架构
 - **Lead**：负责任务分解、分配、验收，不直接执行
 - **Teammates**：专注执行分配到的任务，完成后汇报
-- OpenClaw 的 `leader` Agent 天然适合 Lead 角色
+- **Orchestrator** 的 `orchestrator` Agent 天然适合 Lead 角色
 
 ### 通信模式选择
 
 | 模式 | 适用场景 | 优缺点 |
 |------|----------|--------|
-| Hub-and-spoke | Leader 统一协调 | ✅ 简单可控 ❌ Leader 成为瓶颈 |
+| Hub-and-spoke | Orchestrator 统一协调 | ✅ 简单可控 ❌ Orchestrator 成为瓶颈 |
 | Mesh | Agent 间直接通信 | ✅ 低延迟 ❌ 复杂、难追踪 |
 | 混合 | Lead 协调 + 专业 Agent 直连 | ✅ 平衡 ✅ 推荐 |
 
 ### Subagents vs Agent Teams
-- **Subagents**（当前模式）：适合单次任务、短生命周期、Leader 直接监督
+- **Subagents**（当前模式）：适合单次任务、短生命周期、Orchestrator 直接监督
 - **Agent Teams**：适合长期项目、需要 Agent 间深度协作、任务边界模糊时
 - 经验法则：任务可在 1 小时内完成 → Subagents；需要多轮迭代 → Agent Teams
 
@@ -147,28 +147,28 @@
 
 ### 混合模式（推荐）
 
-日常用 Hub-and-spoke 保持可控，遇到关键决策点临时切换为 Mesh。示例：论文写作流程中，数据采集和文献综述用 Hub-and-spoke，但确定实验方案时让 scholar 和 auto 直接讨论可行性。
+日常用 Hub-and-spoke 保持可控，遇到关键决策点临时切换为 Mesh。示例：论文写作流程中，数据采集和文献综述用 Hub-and-spoke，但确定实验方案时让 research-agent 和 dev-agent 直接讨论可行性。
 
 ## 7. 能力分类与 Agent 映射
 
 | 能力类型 | 描述 | 适合的 Agent | 搜索关键词 |
 |----------|------|-------------|-----------|
-| browser_automation | 网页操作、截图、表单填写 | auto | agent-browser, playwright |
-| web_search | 信息检索、新闻查找 | stock, scholar | tavily, exa-search |
-| api_integration | 第三方 API 调用与对接 | auto | api, rest, webhook |
-| data_extraction | 从网页/文件/PDF 提取结构化数据 | auto, scholar | scraping, parser |
-| data_transformation | 数据清洗、格式转换、聚合 | auto, stock | transform, etl |
-| content_generation | 文案、报告、代码生成 | creator, scholar | writing, generation |
-| file_operations | 读写、编辑、压缩文件 | auto | file, fs |
-| message_delivery | 发送通知到 Telegram/飞书等 | leader | telegram, notify |
-| scheduling | 定时任务、cron 管理 | auto, leader | cron, scheduler |
-| authentication | 登录、token、OAuth | auto | auth, login |
-| database_operations | SQL/NoSQL 读写、迁移 | auto | database, sql |
-| code_execution | 运行脚本、编译、构建 | auto | exec, runner |
-| version_control | Git 操作、PR 管理 | auto | git, version-control |
-| testing | 单元/集成/E2E 测试 | auto | testing, jest |
-| deployment | CI/CD、容器、服务器部署 | auto | deploy, docker |
-| monitoring | 日志、指标、告警 | auto, stock | monitor, logging |
+| browser_automation | 网页操作、截图、表单填写 | dev-agent | agent-browser, playwright |
+| web_search | 信息检索、新闻查找 | analyst-agent, research-agent | tavily, exa-search |
+| api_integration | 第三方 API 调用与对接 | dev-agent | api, rest, webhook |
+| data_extraction | 从网页/文件/PDF 提取结构化数据 | dev-agent, research-agent | scraping, parser |
+| data_transformation | 数据清洗、格式转换、聚合 | dev-agent, analyst-agent | transform, etl |
+| content_generation | 文案、报告、代码生成 | content-agent, research-agent | writing, generation |
+| file_operations | 读写、编辑、压缩文件 | dev-agent | file, fs |
+| message_delivery | 发送通知到 Telegram/飞书等 | orchestrator | telegram, notify |
+| scheduling | 定时任务、cron 管理 | dev-agent, orchestrator | cron, scheduler |
+| authentication | 登录、token、OAuth | dev-agent | auth, login |
+| database_operations | SQL/NoSQL 读写、迁移 | dev-agent | database, sql |
+| code_execution | 运行脚本、编译、构建 | dev-agent | exec, runner |
+| version_control | Git 操作、PR 管理 | dev-agent | git, version-control |
+| testing | 单元/集成/E2E 测试 | dev-agent | testing, jest |
+| deployment | CI/CD、容器、服务器部署 | dev-agent | deploy, docker |
+| monitoring | 日志、指标、告警 | dev-agent, analyst-agent | monitor, logging |
 
 ## 8. 任务认领 vs 分配的决策树
 
@@ -180,7 +180,7 @@
 5. 默认 → orchestrator 分配
 ```
 
-**示例**：重构登录模块 → 分配（需要 auto 的代码专长）；调研新技术方向 → 允许 scholar 自主认领（探索性任务）。
+**示例**：重构登录模块 → 分配（需要 dev-agent 的代码专长）；调研新技术方向 → 允许 research-agent 自主认领（探索性任务）。
 
 ## 9. 成本优化策略
 
@@ -199,7 +199,7 @@
 | 过度分解 | 任务数 > 20，管理开销 > 执行开销 | 合并同类任务，控制在 5-15 个 |
 | 串行瀑布 | 所有任务排队执行，无并行 | 识别无依赖任务，强制并行 |
 | 静默失败 | Agent 完成但结果不符合预期 | 每个任务必须有验收标准 |
-| Leader 瓶颈 | 所有决策都等 Leader 确认 | 下放决策权，仅关键节点需确认 |
+| Orchestrator 瓶颈 | 所有决策都等 Orchestrator 确认 | 下放决策权，仅关键节点需确认 |
 | 通信风暴 | Agent 间频繁发消息 | 批量通信，减少不必要交互 |
 | 计划僵化 | 环境变化但计划不调整 | 定期检查，允许动态调整 |
 | 责任模糊 | 多个 Agent 都以为别人在做 | 每个任务明确唯一负责人 |
