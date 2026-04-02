@@ -69,10 +69,12 @@ npm upgrade、系统更新等必须先向张博汇报，得到允许后再执行
 
 ## Git 仓库
 
-| 仓库 | 本地路径 | GitHub Remote |
-|------|----------|---------------|
-| workspace-leader | `D:\.openclaw\workspace-leader` | ⚠️ **待配置** |
-| Register | `D:\.openclaw\workspace-leader\Register` | https://github.com/MasterAlanLab/Register |
+| 仓库 | 类型 | 本地路径 | GitHub Remote |
+|------|------|----------|---------------|
+| task-orchestrator | 独立 skill 仓库 | `D:\.openclaw\workspace-leader` | https://github.com/zsh-zzu/task-orchestrator |
+| Register | 子目录 | `D:\.openclaw\workspace-leader\Register` | https://github.com/MasterAlanLab/Register |
+
+**注意**：task-orchestrator 仓库根目录 = skill 根目录（SKILL.md、README.md、LICENSE、references/），不是整个 workspace-leader。推送时只推 skill 相关文件。
 
 ## 常用路径
 
